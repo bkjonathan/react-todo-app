@@ -4,6 +4,7 @@ import {
   SafeAreaView,
   StatusBar,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -18,13 +19,20 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { Doc, Id } from '@/convex/_generated/dataModel';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyState from '@/components/EmptyState';
+import { useState } from 'react';
 
 type Todo = Doc<'todos'>;
 export default function Index() {
   const { colors } = useTheme();
+
+  const [editingId, setEditingId] = useState<Id<'todos'> | null>(null);
+  const [editedText, setEditedText] = useState('');
+
   const homeStyles = createHomeStyles(colors);
   const todos = useQuery(api.todos.getTodos);
   const toggleTodo = useMutation(api.todos.toggleTodo);
+  const updateTodo = useMutation(api.todos.updateTodo);
+  const deleteTodo = useMutation(api.todos.deleteTodo);
 
   const handleToggleTodo = async (id: Id<'todos'>) => {
     try {
@@ -34,10 +42,42 @@ export default function Index() {
       Alert.alert('Error', 'Failed to toggle todo. Please try again.');
     }
   };
+  const handleDeleteTodo = async (id: Id<'todos'>) => {
+    Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteTodo({ id }),
+      },
+    ]);
+  };
+
+  const handleEditTodo = (todo: Todo) => {
+    setEditedText(todo.text);
+    setEditingId(todo._id);
+  };
+  const handleSaveEdit = async () => {
+    if (!editingId?.trim() || !editedText?.trim()) return;
+    try {
+      await updateTodo({ id: editingId, text: editedText });
+      setEditingId(null);
+      setEditedText('');
+    } catch (e) {
+      console.log('Error: ', e);
+      Alert.alert('Error', 'Can not edit todo. Please try again.');
+    }
+  };
+  const handleCancelEdit = async () => {
+    setEditingId(null);
+    setEditedText('');
+  };
+
   const isLoading = todos === undefined;
 
   if (isLoading) return <LoadingSpinner />;
   const renderTodoItem = ({ item }: { item: Todo }) => {
+    const isEditing = editingId === item._id;
     return (
       <View style={homeStyles.todoItemWrapper}>
         <LinearGradient
@@ -69,39 +109,84 @@ export default function Index() {
               )}
             </LinearGradient>
           </TouchableOpacity>
-          <View style={homeStyles.todoTextContainer}>
-            <Text
-              style={[
-                homeStyles.todoText,
-                item.isCompleted && {
-                  textDecorationLine: 'line-through',
-                  color: colors.textMuted,
-                  opacity: 0.6,
-                },
-              ]}
-            >
-              {item.text}
-            </Text>
+          {/*{isEditing ? (<Text>Good</Text>)*/}
+          {isEditing ? (
+            <View style={homeStyles.editContainer}>
+              <TextInput
+                style={homeStyles.editInput}
+                value={editedText}
+                onChangeText={setEditedText}
+                autoFocus
+                multiline
+                placeholder="Edit your Todo..."
+                placeholderTextColor={colors.textMuted}
+              />
+              <View style={homeStyles.editButtons}>
+                <TouchableOpacity onPress={handleSaveEdit} activeOpacity={0.8}>
+                  <LinearGradient
+                    colors={colors.gradients.success}
+                    style={homeStyles.editButton}
+                  >
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                    <Text style={homeStyles.editButtonText}>Save</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
 
-            <View style={homeStyles.todoActions}>
-              <TouchableOpacity onPress={() => {}} activeOpacity={0.8}>
-                <LinearGradient
-                  colors={colors.gradients.warning}
-                  style={homeStyles.actionButton}
+                <TouchableOpacity
+                  onPress={handleCancelEdit}
+                  activeOpacity={0.8}
                 >
-                  <Ionicons name="pencil" size={14} color="#fff" />
-                </LinearGradient>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => {}} activeOpacity={0.8}>
-                <LinearGradient
-                  colors={colors.gradients.danger}
-                  style={homeStyles.actionButton}
-                >
-                  <Ionicons name="trash" size={14} color="#fff" />
-                </LinearGradient>
-              </TouchableOpacity>
+                  <LinearGradient
+                    colors={colors.gradients.muted}
+                    style={homeStyles.editButton}
+                  >
+                    <Ionicons name="close" size={16} color="#fff" />
+                    <Text style={homeStyles.editButtonText}>Cancel</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={homeStyles.todoTextContainer}>
+              <Text
+                style={[
+                  homeStyles.todoText,
+                  item.isCompleted && {
+                    textDecorationLine: 'line-through',
+                    color: colors.textMuted,
+                    opacity: 0.6,
+                  },
+                ]}
+              >
+                {item.text}
+              </Text>
+
+              <View style={homeStyles.todoActions}>
+                <TouchableOpacity
+                  onPress={() => handleEditTodo(item)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={colors.gradients.warning}
+                    style={homeStyles.actionButton}
+                  >
+                    <Ionicons name="pencil" size={14} color="#fff" />
+                  </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDeleteTodo(item._id)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={colors.gradients.danger}
+                    style={homeStyles.actionButton}
+                  >
+                    <Ionicons name="trash" size={14} color="#fff" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </LinearGradient>
       </View>
     );
