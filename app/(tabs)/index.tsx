@@ -3,6 +3,7 @@ import useTheme from '@/hooks/useTheme';
 import { createHomeStyles } from '@/assets/styles/home.styles';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '@/components/Header';
+import TodoInput from '@/components/TodoInput';
 
 export default function Index() {
   const { toggleDarkMode, colors } = useTheme();
@@ -16,6 +17,7 @@ export default function Index() {
       <StatusBar barStyle={colors.statusBarStyle} />
       <SafeAreaView style={homeStyles.safeArea}>
         <Header />
+        <TodoInput />
         <Text>Hi</Text>
         <TouchableOpacity onPress={toggleDarkMode}>
           <Text>Toggle Dark Mode</Text>
