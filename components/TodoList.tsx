@@ -3,6 +3,7 @@ import { FlatList, ListRenderItem } from 'react-native';
 import EmptyState from '@/components/EmptyState';
 import TodoItem, { Todo } from '@/components/TodoItem';
 import { Id } from '@/convex/_generated/dataModel';
+import { ColorScheme } from '@/hooks/useTheme';
 
 export type TodoListProps = {
   data: readonly Todo[] | undefined;
@@ -14,7 +15,7 @@ export type TodoListProps = {
   onDelete: (id: Id<'todos'>) => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
-  colors: any;
+  colors: ColorScheme;
   styles: ReturnType<typeof import('@/assets/styles/home.styles').createHomeStyles>;
 };
 
@@ -54,11 +55,16 @@ const TodoList: React.FC<TodoListProps> = ({
     <FlatList
       data={data}
       renderItem={renderItem}
-      keyExtractor={(item) => item._id}
+      keyExtractor={(item) => String(item._id)}
       style={styles.todoList}
       contentContainerStyle={styles.todoListContent}
       ListEmptyComponent={<EmptyState />}
       showsVerticalScrollIndicator={false}
+      initialNumToRender={10}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews
+      extraData={[editingId, editedText]}
     />
   );
 };

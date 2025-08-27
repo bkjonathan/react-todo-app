@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Doc, Id } from '@/convex/_generated/dataModel';
 import { FC, memo } from 'react';
+import { ColorScheme } from '@/hooks/useTheme';
 
 // Type alias for clarity
 export type Todo = Doc<'todos'>;
@@ -17,7 +18,7 @@ export type TodoItemProps = {
   onDelete: (id: Id<'todos'>) => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
-  colors: any; // colors coming from useTheme()
+  colors: ColorScheme; // colors coming from useTheme()
   styles: ReturnType<
     typeof import('@/assets/styles/home.styles').createHomeStyles
   >;
